@@ -3,5 +3,59 @@ name = "tinylm"
 version = "0.1.0"
 description = "Implementation of Language Models from Scratch for Self-Educational Purposes"
 readme = "README.md"
+authors = [
+    {name = "Chiwan Park", email = "chiwanpark@hotmail.com"},
+]
 requires-python = ">=3.12"
+default-groups = []
 dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "mypy>=1.15.0",
+    "poethepoet>=0.34.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.9",
+]
+
+[tool.uv]
+environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+
+[tool.poe.tasks]
+_black = "black --line-length 100 tinylm/ tests/"
+_black-check = "black --check --line-length 100 tinylm/ tests/"
+_isort = "isort tinylm/ tests/"
+_isort-check = "isort --check-only tinylm/ tests/"
+formatting-check = ["_black-check", "_isort-check"]
+format = ["_black", "_isort"]
+lint = "ruff check tinylm/ tests/"
+typetest = "mypy tinylm/ tests/"
+test = "pytest"
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+lint.select = [
+    "E",
+    "W",
+    "F",
+    "C",
+    "B",
+    "T20",
+]
+lint.ignore = [
+    "E501",
+]
+target-version = "py312"
