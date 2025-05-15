@@ -21,5 +21,5 @@ repo = Mount.from_local_dir(ROOT_PATH, remote_path=REMOTE_ROOT_PATH)
 def do_test():
     import subprocess
 
-    subprocess.run(["uv sync --group dev"], check=True, shell=True, cwd=REMOTE_ROOT_PATH)
-    subprocess.run(["TEST_NVIDIA=1 uv run poe test"], check=True, shell=True, cwd=REMOTE_ROOT_PATH)
+    subprocess.run("uv sync --group dev", check=True, shell=True, cwd=REMOTE_ROOT_PATH)
+    subprocess.run("TEST_NVIDIA=1 uv run poe test", check=True, shell=True, cwd=REMOTE_ROOT_PATH)
