@@ -8,12 +8,20 @@ on:
     - "ci/**"
     - "tests/**"
     - "tinylm/**"
+    - "pyproject.toml"
+    - "uv.lock"
+    - ".github/workflows/**"
   pull_request:
     type: push
+    branches:
+    - main
     paths:
     - "ci/**"
     - "tests/**"
     - "tinylm/**"
+    - "pyproject.toml"
+    - "uv.lock"
+    - ".github/workflows/**"
   workflow_dispatch:
 
 jobs:
