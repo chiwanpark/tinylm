@@ -18,6 +18,7 @@ build-backend = "hatchling.build"
 dev = [
     "black>=25.1.0",
     "isort>=6.0.1",
+    "modal>=0.77.0",
     "mypy>=1.15.0",
     "poethepoet>=0.34.0",
     "pytest>=8.3.5",
@@ -33,14 +34,14 @@ required-environments = [
 ]
 
 [tool.poe.tasks]
-_black = "black --line-length 100 tinylm/ tests/"
-_black-check = "black --check --line-length 100 tinylm/ tests/"
-_isort = "isort tinylm/ tests/"
-_isort-check = "isort --check-only tinylm/ tests/"
+_black = "black --line-length 100 tinylm/ ci/ tests/"
+_black-check = "black --check --line-length 100 tinylm/ ci/ tests/"
+_isort = "isort tinylm/ ci/ tests/"
+_isort-check = "isort --check-only tinylm/ ci/ tests/"
 formatting-check = ["_black-check", "_isort-check"]
 format = ["_black", "_isort"]
-lint = "ruff check tinylm/ tests/"
-typetest = "mypy tinylm/ tests/"
+lint = "ruff check tinylm/ ci/ tests/"
+typetest = "mypy tinylm/ ci/ tests/"
 test = "pytest"
 
 [tool.isort]
