@@ -9,12 +9,10 @@ PYTHON_VERSION = open(ROOT_PATH / ".python-version", "r").read().strip()
 
 app = App(
     "ci_nvidia",
-    image=Image.from_registry(
-        f"nvidia/cuda:{CUDA_IMAGE_TAG}",
-        add_python=PYTHON_VERSION,
-    ).pip_install("uv"),
+    image=Image.from_registry(f"nvidia/cuda:{CUDA_IMAGE_TAG}", add_python=PYTHON_VERSION)
+    .pip_install("uv")
+    .add_local_dir(ROOT_PATH, remote_path=REMOTE_ROOT_PATH),
 )
-repo = Mount.from_local_dir(ROOT_PATH, remote_path=REMOTE_ROOT_PATH)
 
 
 @app.function(gpu="L4", mounts=[repo], timeout=3600)
