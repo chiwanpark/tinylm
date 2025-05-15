@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from modal import App, Image, Mount
+from modal import App, Image
 
 ROOT_PATH = Path(__file__).parent.parent
 REMOTE_ROOT_PATH = "/root/tinylm"
