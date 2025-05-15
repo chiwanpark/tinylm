@@ -5,7 +5,7 @@ from modal import App, Image, Mount
 ROOT_PATH = Path(__file__).parent.parent
 REMOTE_ROOT_PATH = "/root/tinylm"
 CUDA_IMAGE_TAG = "12.8.1-cudnn-devel-ubuntu24.04"
-PYTHON_VERSION = open(ROOT_PATH / ".python_version", "r").read()
+PYTHON_VERSION = open(ROOT_PATH / ".python-version", "r").read()
 
 app = App(
     "ci_nvidia",
