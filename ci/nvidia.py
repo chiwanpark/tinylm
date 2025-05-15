@@ -15,7 +15,7 @@ app = App(
 )
 
 
-@app.function(gpu="L4", mounts=[repo], timeout=3600)
+@app.function(gpu="L4", timeout=3600)
 def do_test():
     import subprocess
 
