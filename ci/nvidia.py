@@ -11,7 +11,8 @@ app = App(
     "ci_nvidia",
     image=Image.from_registry(f"nvidia/cuda:{CUDA_IMAGE_TAG}", add_python=PYTHON_VERSION)
     .pip_install("uv")
-    .add_local_dir(ROOT_PATH, remote_path=REMOTE_ROOT_PATH),
+    .add_local_dir(ROOT_PATH, remote_path=REMOTE_ROOT_PATH)
+    .run_commands("uv sync --group dev")
 )
 
 
@@ -19,5 +20,4 @@ app = App(
 def do_test():
     import subprocess
 
-    subprocess.run("uv sync --group dev", check=True, shell=True, cwd=REMOTE_ROOT_PATH)
     subprocess.run("TEST_NVIDIA=1 uv run poe test", check=True, shell=True, cwd=REMOTE_ROOT_PATH)
