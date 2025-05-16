@@ -11,8 +11,10 @@ app = App(
     "ci_nvidia",
     image=Image.from_registry(f"nvidia/cuda:{CUDA_IMAGE_TAG}", add_python=PYTHON_VERSION)
     .pip_install("uv")
-    .add_local_dir(ROOT_PATH, remote_path=REMOTE_ROOT_PATH)
+    .add_local_file("pyproject.toml", remote_path=REMOTE_ROOT_PATH, copy=True)
+    .add_local_file("uv.lock", remote_path=REMOTE_ROOT_PATH, copy=True)
     .run_commands("uv sync --group dev")
+    .add_local_dir(ROOT_PATH, remote_path=REMOTE_ROOT_PATH)
 )
 
 
