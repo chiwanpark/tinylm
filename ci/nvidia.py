@@ -10,6 +10,7 @@ PYTHON_VERSION = "3.12"
 app = App(
     "ci_nvidia",
     image=Image.from_registry(f"nvidia/cuda:{CUDA_IMAGE_TAG}", add_python=PYTHON_VERSION)
+    .apt_install("python3-dev", "build-essential", "git", "libexpat1-dev")
     .pip_install("uv")
     .add_local_dir(ROOT_PATH, remote_path=REMOTE_ROOT_PATH, copy=True)
     .run_commands(f"cd {REMOTE_ROOT_PATH} && uv sync --group dev --compile-bytecode"),
