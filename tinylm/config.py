@@ -9,6 +9,15 @@ from pydantic_settings.sources import YamlConfigSettingsSource
 _config: Optional["TinyLMConfig"] = None
 
 
+def _check_flashinfer() -> bool:
+    try:
+        import flashinfer  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
 class TinyLMConfig(BaseSettings):
     model_config = SettingsConfigDict(
         extra="forbid",
@@ -16,6 +25,9 @@ class TinyLMConfig(BaseSettings):
 
     model_path: str = Field()
     """The path to the language model."""
+
+    use_flashinfer: bool = Field(default_factory=_check_flashinfer)
+    """Whether to use FlashInfer for inference acceleration."""
 
     @classmethod
     def from_yaml(cls, path: Path) -> Self:

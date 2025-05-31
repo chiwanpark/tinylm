@@ -1,14 +1,4 @@
-from pathlib import Path
-
-import pytest
-
 from tinylm.config import TinyLMConfig, config_override, get_config
-
-
-@pytest.fixture(scope="module")
-def config():
-    path = Path(__file__).parent / "config.yaml"
-    return TinyLMConfig.from_yaml(path)
 
 
 def test_config(config: TinyLMConfig):
