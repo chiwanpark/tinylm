@@ -8,6 +8,8 @@ TinyLM is a set of language model implementation from scratch for self-education
 
 - Running small language models on single GPU
 - Modern language model inference architectures
-  * Efficient key-value caching such as PagedAttention and RadixAttention
-  * Optimized kernels such as FlashAttention and FlashInfer
-  * Efficient batching and scheduling such as Nanoflow
+  - [ ] Key-value caching
+  - [ ] Optimized execution
+    - [ ] `torch.compile`
+    - [ ] FlashInfer
+  - [ ] Dynamic batching
