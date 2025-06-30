@@ -20,6 +20,9 @@ def test_GeluAndMul(
     is_nvidia: bool,
     config: TinyLMConfig,
 ) -> None:
+    if not is_nvidia:
+        pytest.skip("Skipping test on non-NVIDIA environment")
+
     x = torch.randn(batch_size, seq_len, 2 * dim).cuda().to(dtype)
     layer = GeluAndMul(approximate=approximate)
     expected_output = layer.forward_torch(x)
