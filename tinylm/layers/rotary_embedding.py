@@ -5,6 +5,8 @@ from torch import nn
 
 
 class RotaryEmbedding(nn.Module):
+    cos_sin_cache: torch.Tensor
+
     def __init__(
         self,
         head_size: int,
@@ -44,7 +46,7 @@ class RotaryEmbedding(nn.Module):
         query: torch.Tensor,
         key: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        cos_sin = self.cos_sin_cache[positions]
+        cos_sin = self.cos_sin_cache.index_select(0, positions)
         cos, sin = cos_sin.chunk(2, dim=-1)
 
         q_rotated = self._apply_rotary_embedding(query, cos, sin)
