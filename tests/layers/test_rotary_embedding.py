@@ -1,12 +1,13 @@
 import pytest
 import torch
 
+from tinylm.config import TinyLMConfig, config_override
 from tinylm.layers.rotary_embedding import get_rotary_embedding
 from tinylm.testutil import allclose
 
 
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
-def test_rotary_embedding_correctness(device: str, is_nvidia: bool) -> None:
+def test_rotary_embedding_correctness(config: TinyLMConfig, device: str, is_nvidia: bool) -> None:
     if not is_nvidia and device == "cuda":
         pytest.skip("Skipping test on non-NVIDIA environment")
 
@@ -17,13 +18,14 @@ def test_rotary_embedding_correctness(device: str, is_nvidia: bool) -> None:
     device_ = torch.device(device)
     dtype = torch.bfloat16
 
-    rotary_emb = get_rotary_embedding(
-        head_size=head_size,
-        rotary_dim=head_size,
-        max_position_embeddings=seq_len,
-        base=1000.0,
-    )
-    rotary_emb = rotary_emb.to(device=device_)
+    with config_override(config, use_flashinfer=False):
+        rotary_emb = get_rotary_embedding(
+            head_size=head_size,
+            rotary_dim=head_size,
+            max_position_embeddings=seq_len,
+            base=1000.0,
+        )
+        rotary_emb = rotary_emb.to(device=device_)
 
     num_tokens = batch_size * seq_len
     input_size = num_tokens * head_size * num_heads
@@ -44,5 +46,35 @@ def test_rotary_embedding_correctness(device: str, is_nvidia: bool) -> None:
         dtype=dtype,
         device=device_,
     )
+    assert allclose(q_rotated, q_rotated_ref)
+    assert allclose(k_rotated, k_rotated_ref)
+
+
+def test_rotary_embedding_flashinfer(config: TinyLMConfig):
+    batch_size = 16
+    head_size = 64
+    seq_len = 3
+    num_heads = 2
+    device = torch.device("cuda")
+    dtype = torch.bfloat16
+
+    with config_override(config, use_flashinfer=True):
+        rotary_emb = get_rotary_embedding(
+            head_size=head_size,
+            rotary_dim=head_size,
+            max_position_embeddings=seq_len,
+            base=1000.0,
+        )
+        rotary_emb = rotary_emb.to(device=device)
+
+    num_tokens = batch_size * seq_len
+    input_size = num_tokens * head_size * num_heads
+    shape = num_tokens, num_heads, head_size
+    pos = torch.arange(seq_len, dtype=torch.long, device=device).repeat(batch_size)
+    q = torch.randn(input_size, dtype=dtype, device=device).reshape(shape)
+    k = torch.randn(input_size, dtype=dtype, device=device).reshape(shape)
+
+    q_rotated, k_rotated = rotary_emb.forward(pos, q, k)
+    q_rotated_ref, k_rotated_ref = rotary_emb.forward_torch(pos, q, k)
     assert allclose(q_rotated, q_rotated_ref)
     assert allclose(k_rotated, k_rotated_ref)

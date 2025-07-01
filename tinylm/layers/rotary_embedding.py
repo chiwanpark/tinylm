@@ -1,10 +1,12 @@
 from functools import lru_cache
 
 import torch
-from torch import nn
+from flashinfer.rope import apply_rope_with_cos_sin_cache
+
+from tinylm.layers.base import AcceleratedModule
 
 
-class RotaryEmbedding(nn.Module):
+class RotaryEmbedding(AcceleratedModule[tuple[torch.Tensor, torch.Tensor]]):
     cos_sin_cache: torch.Tensor
 
     def __init__(
@@ -40,7 +42,8 @@ class RotaryEmbedding(nn.Module):
         y2 = x1 * sin + x2 * cos
         return torch.cat((y1, y2), dim=-1).to(x.dtype)
 
-    def forward(
+    @torch.compile
+    def forward_torch(
         self,
         positions: torch.Tensor,
         query: torch.Tensor,
@@ -53,6 +56,20 @@ class RotaryEmbedding(nn.Module):
         k_rotated = self._apply_rotary_embedding(key, cos, sin)
 
         return q_rotated, k_rotated
+
+    def forward_flashinfer(
+        self,
+        positions: torch.Tensor,
+        query: torch.Tensor,
+        key: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        return apply_rope_with_cos_sin_cache(
+            positions=positions,
+            query=query,
+            key=key,
+            head_size=self.head_size,
+            cos_sin_cache=self.cos_sin_cache,
+        )
 
 
 @lru_cache(maxsize=1)
