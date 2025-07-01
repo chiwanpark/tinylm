@@ -29,18 +29,24 @@ def build_packed_linear(ref1: nn.Linear, ref2: nn.Linear) -> PackedLinear:
 @pytest.mark.parametrize("batch_size", [1, 4, 16])
 @pytest.mark.parametrize("seq_len", [1, 4, 16])
 @pytest.mark.parametrize("dtype", [torch.bfloat16, torch.float16])
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
 def test_packed_linear(
     skip_bias_add: bool,
     dim: int,
     batch_size: int,
     seq_len: int,
     dtype: torch.dtype,
+    device: str,
     is_nvidia: bool,
 ) -> None:
-    l1 = nn.Linear(dim, dim // 2, bias=not skip_bias_add, dtype=dtype).cuda()
-    l2 = nn.Linear(dim, dim // 2, bias=not skip_bias_add, dtype=dtype).cuda()
-    l_packed = build_packed_linear(l1, l2).cuda()
-    x = torch.randn(batch_size, seq_len, dim).cuda().to(dtype)
+    if device == "cuda" and not is_nvidia:
+        pytest.skip("Skipping test on non-NVIDIA environment")
+
+    device_ = torch.device(device)
+    l1 = nn.Linear(dim, dim // 2, bias=not skip_bias_add, dtype=dtype).to(device_)
+    l2 = nn.Linear(dim, dim // 2, bias=not skip_bias_add, dtype=dtype).to(device_)
+    l_packed = build_packed_linear(l1, l2).to(device_)
+    x = torch.randn(batch_size, seq_len, dim).to(dtype=dtype, device=device_)
 
     out, _ = l_packed(x)
     assert allclose(out, torch.cat([l1(x), l2(x)], dim=-1))

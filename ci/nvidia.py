@@ -30,4 +30,4 @@ def do_test():
         "cwd": REMOTE_ROOT_PATH,
     }
     subprocess.run("uv sync --group dev --compile-bytecode", **kwargs)
-    subprocess.run("TEST_NVIDIA=1 uv run --group dev poe test", **kwargs)
+    subprocess.run("uv run --group dev poe test", **kwargs)
