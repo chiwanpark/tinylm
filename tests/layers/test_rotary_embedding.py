@@ -50,7 +50,10 @@ def test_rotary_embedding_correctness(config: TinyLMConfig, device: str, is_nvid
     assert allclose(k_rotated, k_rotated_ref)
 
 
-def test_rotary_embedding_flashinfer(config: TinyLMConfig):
+def test_rotary_embedding_flashinfer(config: TinyLMConfig, is_nvidia: bool) -> None:
+    if not is_nvidia:
+        pytest.skip("Skipping test on non-NVIDIA environment")
+
     batch_size = 16
     head_size = 64
     seq_len = 3
