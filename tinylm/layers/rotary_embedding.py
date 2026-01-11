@@ -1,75 +1,51 @@
 from functools import lru_cache
 
-import torch
-from flashinfer.rope import apply_rope_with_cos_sin_cache
-
-from tinylm.layers.base import AcceleratedModule
+from flax import nnx
+from jax import numpy as jnp
 
 
-class RotaryEmbedding(AcceleratedModule[tuple[torch.Tensor, torch.Tensor]]):
-    cos_sin_cache: torch.Tensor
+class CosSinCache(nnx.Variable):
+    pass
 
-    def __init__(
-        self,
-        head_size: int,
-        rotary_dim: int,
-        max_position_embeddings: int,
-        base: float,
-    ) -> None:
+
+class RotaryEmbedding(nnx.Module):
+    def __init__(self, head_size: int, rotary_dim: int, max_position_embeddings: int, base: float) -> None:
         super().__init__()
         self.head_size = head_size
+        self.rotary_dim = rotary_dim
+        self.max_position_embeddings = max_position_embeddings
+        self.base = base
 
-        # build the cosine and sine cache
-        inv_freq = 1.0 / (base ** (torch.arange(0, rotary_dim, 2).float() / rotary_dim))
-        t = torch.arange(max_position_embeddings, dtype=torch.float)
-        freqs = torch.outer(t, inv_freq)
-        cos, sin = freqs.cos(), freqs.sin()
-        cache = torch.cat((cos, sin), dim=-1)
-        self.register_buffer("cos_sin_cache", cache, persistent=False)
+        self.cos_sin_cache = CosSinCache(self._compute_cos_sin())
 
-    def _apply_rotary_embedding(
-        self,
-        x: torch.Tensor,
-        cos: torch.Tensor,
-        sin: torch.Tensor,
-    ) -> torch.Tensor:
-        cos = cos.unsqueeze(-2)
-        sin = sin.unsqueeze(-2)
-        # Note that this conversion is different from other frameworks such as vLLM or SGLang.
-        # We added float32 conversion because float32 is required for inputs with long context.
-        x1, x2 = torch.chunk(x.float(), 2, dim=-1)
+    def _compute_cos_sin(self) -> jnp.ndarray:
+        inv_freq = 1.0 / (self.base ** (jnp.arange(0, self.rotary_dim, 2) / self.rotary_dim))
+        t = jnp.arange(self.max_position_embeddings)
+        freqs = jnp.outer(t, inv_freq)
+        return jnp.concatenate((jnp.cos(freqs), jnp.sin(freqs)), axis=-1)
+
+    def __call__(self, positions: jnp.ndarray, query: jnp.ndarray, key: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
+        cos_sin = self.cos_sin_cache[positions]
+
+        cos, sin = jnp.split(cos_sin, 2, axis=-1)
+
+        q_rot = self._apply_rotary_embedding(query, cos, sin)
+        k_rot = self._apply_rotary_embedding(key, cos, sin)
+
+        return q_rot, k_rot
+
+    def _apply_rotary_embedding(self, x: jnp.ndarray, cos: jnp.ndarray, sin: jnp.ndarray) -> jnp.ndarray:
+        dtype = x.dtype
+        x = x.astype(jnp.float32)
+        x1, x2 = jnp.split(x, 2, axis=-1)
+
+        cos = jnp.expand_dims(cos, axis=-2)
+        sin = jnp.expand_dims(sin, axis=-2)
+
         y1 = x1 * cos - x2 * sin
         y2 = x1 * sin + x2 * cos
-        return torch.cat((y1, y2), dim=-1).to(x.dtype)
 
-    @torch.compile
-    def forward_torch(
-        self,
-        positions: torch.Tensor,
-        query: torch.Tensor,
-        key: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        cos_sin = self.cos_sin_cache.index_select(0, positions)
-        cos, sin = cos_sin.chunk(2, dim=-1)
-
-        q_rotated = self._apply_rotary_embedding(query, cos, sin)
-        k_rotated = self._apply_rotary_embedding(key, cos, sin)
-
-        return q_rotated, k_rotated
-
-    def forward_flashinfer(
-        self,
-        positions: torch.Tensor,
-        query: torch.Tensor,
-        key: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        return apply_rope_with_cos_sin_cache(
-            positions=positions,
-            query=query,
-            key=key,
-            head_size=self.head_size,
-            cos_sin_cache=self.cos_sin_cache,
-        )
+        return jnp.concatenate((y1, y2), axis=-1).astype(dtype)
 
 
 @lru_cache(maxsize=1)
