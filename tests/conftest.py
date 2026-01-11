@@ -6,7 +6,7 @@ from typing import Generator
 
 import pytest
 
-from tinylm.config import TinyLMConfig, get_config
+from tinylm.config import TinyLMTrainConfig, get_config
 
 
 @pytest.fixture(scope="session")
@@ -30,6 +30,6 @@ def is_nvidia() -> bool:
 
 
 @pytest.fixture(scope="session")
-def config() -> Generator[TinyLMConfig, None, None]:
+def train_config() -> Generator[TinyLMTrainConfig, None, None]:
     path = Path(__file__).parent / "config.yaml"
     yield get_config(path)
