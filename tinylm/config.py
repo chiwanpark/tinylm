@@ -6,16 +6,16 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic_settings.sources import YamlConfigSettingsSource
 
-_config: Optional["TinyLMConfig"] = None
+_config: Optional["TinyLMTrainConfig"] = None
 
 
-class TinyLMConfig(BaseSettings):
+class TinyLMTrainConfig(BaseSettings):
     model_config = SettingsConfigDict(
         extra="forbid",
     )
 
-    model_path: str = Field()
-    """The path to the language model."""
+    model_name: str = Field()
+    """Name of the model to be trained."""
 
     @classmethod
     def from_yaml(cls, path: Path) -> Self:
@@ -27,7 +27,7 @@ class TinyLMConfig(BaseSettings):
 
 
 @contextmanager
-def config_override(config: Optional[TinyLMConfig] = None, **kwargs: Any) -> Generator[None, None, None]:
+def config_override(config: Optional[TinyLMTrainConfig] = None, **kwargs: Any) -> Generator[None, None, None]:
     if not config:
         config = get_config()
     data = config.model_dump()
@@ -35,17 +35,17 @@ def config_override(config: Optional[TinyLMConfig] = None, **kwargs: Any) -> Gen
 
     global _config
     config_old = _config
-    _config = TinyLMConfig.from_dict(data)
+    _config = TinyLMTrainConfig.from_dict(data)
     try:
         yield
     finally:
         _config = config_old
 
 
-def get_config(path: Optional[Path] = None) -> TinyLMConfig:
+def get_config(path: Optional[Path] = None) -> TinyLMTrainConfig:
     global _config
     if path is not None:
-        _config = TinyLMConfig.from_yaml(path)
+        _config = TinyLMTrainConfig.from_yaml(path)
     if not _config:
         raise ValueError("Configuration not set. Please provide a path to the configuration.")
     return _config
