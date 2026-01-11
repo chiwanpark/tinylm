@@ -29,5 +29,5 @@ def do_test():
         "shell": True,
         "cwd": REMOTE_ROOT_PATH,
     }
-    subprocess.run("uv sync --group dev --compile-bytecode", **kwargs)
+    subprocess.run("uv sync --group dev --extra cuda --compile-bytecode", **kwargs)
     subprocess.run("uv run --group dev poe test", **kwargs)
