@@ -8,7 +8,7 @@ TinyLM is a set of language model implementation from scratch for self-education
 
 - Training language models from scratch using JAX/Flax
   - [ ] Auto-regressive language model training
-  - [ ] Various post-training techiniques
+  - [ ] Various post-training techniques
     - [ ] Supervised fine tuning (SFT)
     - [ ] Low-rank adaptation (LoRA)
     - [ ] Proximal policy optimization (PPO)
